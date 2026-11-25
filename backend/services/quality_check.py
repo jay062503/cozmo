@@ -15,8 +15,8 @@ from PIL import Image, ImageFilter
 from backend.models.job_record import QualityCheckResult, QualityThresholds
 
 THRESHOLDS = QualityThresholds(
-    min_blur_score=80.0,
-    min_brightness=40.0,
+    min_blur_score=15.0,
+    min_brightness=15.0,
     min_framing=0.15,
 )
 
@@ -38,7 +38,7 @@ def check_frame(image_b64: str, capture_type: str) -> QualityCheckResult:
     frame  = _framing(img)
 
     failures = []
-    if blur < THRESHOLDS.min_blur_score:
+    if capture_type == "nameplate" and blur < THRESHOLDS.min_blur_score:
         failures.append(
             f"Image is blurry (score {blur:.1f}, need ≥{THRESHOLDS.min_blur_score}). "
             "Hold steady and retake."
