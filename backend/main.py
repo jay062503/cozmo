@@ -24,6 +24,21 @@ app = FastAPI(
     version="1.0.0",
 )
 
+@app.on_event("startup")
+async def startup_message():
+    import socket
+    hostname = socket.gethostname()
+    try:
+        lan_ip = socket.gethostbyname(hostname)
+    except Exception:
+        lan_ip = "unknown"
+    print("\n" + "="*55)
+    print("  FieldCapture Web is running")
+    print(f"  Local:   http://localhost:8000")
+    print(f"  Network: http://{lan_ip}:8000")
+    print("  Open either URL in your browser")
+    print("="*55 + "\n")
+
 # Allow requests from the Android browser (any origin on local network)
 app.add_middleware(
     CORSMiddleware,
