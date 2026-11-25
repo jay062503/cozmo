@@ -1,0 +1,126 @@
+{
+  "job_id": "JOB-C8E4F201",
+  "session_id": "SES-9A1B3C7D",
+  "technician_id": null,
+  "started_at": "2026-11-23T14:02:11Z",
+  "completed_at": "2026-11-23T14:19:33Z",
+  "status": "uploaded",
+  "captures": [
+    {
+      "id": "cap-101-dmg",
+      "capture_type": "damage",
+      "timestamp": "2026-11-23T14:03:40Z",
+      "image_local_path": "uploads/cap-101-dmg.jpg",
+      "image_remote_url": "https://api.cozmo.ai/captures/cap-101-dmg",
+      "quality_check": {
+        "passed": true,
+        "blur_score": 220.1,
+        "brightness_score": 110.3,
+        "framing_score": 0.61,
+        "failure_reasons": [],
+        "thresholds_used": { "min_blur_score": 80.0, "min_brightness": 40.0, "min_framing": 0.15 }
+      },
+      "extraction": {
+        "type": "damage",
+        "payload": {
+          "room":          { "value": "bathroom", "confidence": 0.95, "source": "voice_command" },
+          "surface":       { "value": "ceiling",  "confidence": 0.91, "source": "vision_api" },
+          "damage_type":   { "value": "mold growth, circular pattern consistent with roof leak", "confidence": 0.88, "source": "vision_api" },
+          "rough_size_m2": { "value": "0.3",      "confidence": 0.41, "source": "vision_api" },
+          "severity_level":{ "value": "high",     "confidence": 0.84, "source": "vision_api" },
+          "overall_confidence": 0.82
+        }
+      },
+      "upload_status": "uploaded"
+    },
+    {
+      "id": "cap-102-dmg-dark",
+      "capture_type": "damage",
+      "timestamp": "2026-11-23T14:08:22Z",
+      "image_local_path": "uploads/cap-102-dmg-dark.jpg",
+      "image_remote_url": null,
+      "quality_check": {
+        "passed": false,
+        "blur_score": 95.2,
+        "brightness_score": 29.4,
+        "framing_score": 0.33,
+        "failure_reasons": [
+          "Too dark (brightness 29.4, need \u226540.0). Move to better light or switch on the torch."
+        ],
+        "thresholds_used": { "min_blur_score": 80.0, "min_brightness": 40.0, "min_framing": 0.15 }
+      },
+      "extraction": {
+        "type": "damage",
+        "payload": {
+          "room":          { "value": "bathroom", "confidence": 0.95, "source": "voice_command" },
+          "surface":       { "value": "floor",    "confidence": 0.90, "source": "voice_command" },
+          "damage_type":   { "value": null,       "confidence": 0.12, "source": "vision_api" },
+          "rough_size_m2": { "value": null,       "confidence": 0.0,  "source": "vision_api" },
+          "severity_level":{ "value": null,       "confidence": 0.0,  "source": "vision_api" },
+          "overall_confidence": 0.12
+        }
+      },
+      "upload_status": "uploaded"
+    },
+    {
+      "id": "cap-103-dmg",
+      "capture_type": "damage",
+      "timestamp": "2026-11-23T14:09:01Z",
+      "image_local_path": "uploads/cap-103-dmg.jpg",
+      "image_remote_url": "https://api.cozmo.ai/captures/cap-103-dmg",
+      "quality_check": {
+        "passed": true,
+        "blur_score": 198.3,
+        "brightness_score": 76.8,
+        "framing_score": 0.49,
+        "failure_reasons": [],
+        "thresholds_used": { "min_blur_score": 80.0, "min_brightness": 40.0, "min_framing": 0.15 }
+      },
+      "extraction": {
+        "type": "damage",
+        "payload": {
+          "room":          { "value": "bathroom",                                     "confidence": 0.95, "source": "voice_command" },
+          "surface":       { "value": "floor",                                        "confidence": 0.90, "source": "voice_command" },
+          "damage_type":   { "value": "tile grout failure, standing water visible",   "confidence": 0.86, "source": "vision_api" },
+          "rough_size_m2": { "value": "1.2",                                          "confidence": 0.47, "source": "vision_api" },
+          "severity_level":{ "value": "high",                                         "confidence": 0.81, "source": "vision_api" },
+          "overall_confidence": 0.81
+        }
+      },
+      "upload_status": "uploaded"
+    }
+  ],
+  "notes": [
+    {
+      "id": "note-101",
+      "timestamp": "2026-11-23T14:14:50Z",
+      "raw_voice_text": "note: smell of mildew from under the vanity, check for hidden moisture",
+      "extraction": {
+        "raw_text": "note: smell of mildew from under the vanity, check for hidden moisture",
+        "location": { "value": "under the vanity", "confidence": 0.78, "source": "keyword_match" },
+        "subject":  { "value": "smell of mildew from under the vanity", "confidence": 0.9, "source": "voice_command" },
+        "urgency":  { "value": "normal", "confidence": 0.9, "source": "keyword_match" },
+        "overall_confidence": 0.85
+      }
+    }
+  ],
+  "line_items": [
+    { "id": "li-101", "code": "MOLD-TREAT-SF", "description": "Mold remediation treatment",              "unit": "sq_ft",  "estimated_quantity": 3.2,  "confidence": 0.82, "source_captures": ["cap-101-dmg"] },
+    { "id": "li-102", "code": "DRY-RR-SF",     "description": "Remove and replace drywall",              "unit": "sq_ft",  "estimated_quantity": 3.2,  "confidence": 0.75, "source_captures": ["cap-101-dmg"] },
+    { "id": "li-103", "code": "FLR-TIL-SF",    "description": "Remove and replace ceramic/porcelain tile","unit": "sq_ft",  "estimated_quantity": 12.9, "confidence": 0.81, "source_captures": ["cap-103-dmg"] },
+    { "id": "li-104", "code": "FLR-SUB-SF",    "description": "Remove and replace subfloor (3/4\" OSB)", "unit": "sq_ft",  "estimated_quantity": 12.9, "confidence": 0.70, "source_captures": ["cap-103-dmg"] },
+    { "id": "li-105", "code": "EQUIP-DH-EA",   "description": "Dehumidifier placement (commercial)",     "unit": "each",   "estimated_quantity": 1.0,  "confidence": 0.80, "source_captures": ["cap-103-dmg"] }
+  ],
+  "metadata": {
+    "app_version": "1.0.0",
+    "sdk_version": "DAT-1.0-Web-Sim",
+    "device_mode": "android_browser",
+    "connectivity_events": [
+      { "timestamp": "2026-11-23T14:06:30Z", "event_type": "lost",     "queued_items_at_event": 1 },
+      { "timestamp": "2026-11-23T14:07:12Z", "event_type": "restored", "queued_items_at_event": 2 }
+    ],
+    "total_captures": 3,
+    "failed_quality_checks": 1,
+    "retake_requests": 1
+  }
+}

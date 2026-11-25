@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>FieldCapture</title>
+  <link rel="stylesheet" href="/static/css/app.css" />
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════════════════════════
+     SESSION SCREEN  (shown before a session starts)
+══════════════════════════════════════════════════════════════════ -->
+<div id="screen-idle" class="screen active">
+  <div class="idle-center">
+    <div class="app-logo">📷</div>
+    <h1 class="app-title">FieldCapture</h1>
+    <p class="app-sub">DAT 1.0 · Web Simulator</p>
+    <p class="app-desc">
+      Works in Android Chrome on your phone.<br>
+      Point the camera, speak a command, walk out with a job record.
+    </p>
+    <button id="btn-start" class="btn-primary">Start Session</button>
+    <p class="fallback-note">📱 Using Android camera + mic as Mock Device Kit fallback</p>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     CAPTURE SCREEN  (live session)
+══════════════════════════════════════════════════════════════════ -->
+<div id="screen-capture" class="screen">
+
+  <!-- Live camera feed -->
+  <video id="camera" autoplay playsinline muted></video>
+  <canvas id="canvas" style="display:none"></canvas>
+
+  <!-- Top bar -->
+  <div class="top-bar">
+    <div class="status-dot-row">
+      <span class="dot dot-live" id="dot-state"></span>
+      <span id="label-state">LIVE</span>
+    </div>
+    <div class="capture-count" id="capture-count">0 captures</div>
+    <div class="connectivity" id="connectivity-label">
+      <span id="wifi-icon">📶</span>
+      <span id="queue-label"></span>
+    </div>
+  </div>
+
+  <!-- Retake banner (hidden by default) -->
+  <div id="retake-banner" class="retake-banner hidden">
+    <div class="retake-title">⚠️ Retake needed</div>
+    <div id="retake-reasons" class="retake-reasons"></div>
+  </div>
+
+  <!-- Status pill -->
+  <div class="pill-area">
+    <div id="status-pill" class="status-pill pill-idle">
+      <span id="pill-icon">🎙</span>
+      <span id="pill-text">Listening for commands…</span>
+    </div>
+  </div>
+
+  <!-- Voice command panel -->
+  <div class="voice-panel">
+    <div class="last-command-label">Last command</div>
+    <div id="last-command" class="last-command">—</div>
+  </div>
+
+  <!-- Bottom controls -->
+  <div class="bottom-bar">
+
+    <!-- Mic button -->
+    <button id="btn-mic" class="icon-btn" title="Hold to speak">🎙</button>
+
+    <!-- End session -->
+    <button id="btn-stop" class="btn-danger">End Session</button>
+
+    <!-- Manual command input toggle -->
+    <button id="btn-manual" class="icon-btn" title="Type command">⌨️</button>
+
+    <!-- Upload / file input -->
+    <button id="btn-upload" class="icon-btn" title="Upload photo or file">📎</button>
+    <input id="file-input" type="file" accept="image/*" style="display:none" />
+  </div>
+
+  <!-- Upload preview panel (shown after a file is chosen) -->
+  <div id="upload-panel" class="upload-panel hidden">
+    <div class="upload-preview-row">
+      <img id="upload-preview" class="upload-thumb" alt="Selected image" />
+      <div class="upload-info">
+        <div id="upload-filename" class="upload-filename"></div>
+        <div id="upload-dims" class="upload-dims"></div>
+      </div>
+    </div>
+    <div class="upload-actions">
+      <button id="btn-use-upload" class="btn-send">Use this image ✓</button>
+      <button id="btn-cancel-upload" class="btn-cancel">Cancel ✕</button>
+    </div>
+    <div class="upload-hint">Speak or type a command first, then use this image as the capture source.</div>
+  </div>
+
+  <!-- Manual command input (shown when ⌨️ pressed) -->
+  <div id="manual-panel" class="manual-panel hidden">
+    <input id="manual-input" type="text"
+           placeholder='e.g. "capture nameplate"'
+           autocomplete="off" autocorrect="off" spellcheck="false" />
+    <button id="btn-send-manual" class="btn-send">Send</button>
+    <div class="command-hints">
+      <span class="hint-btn" data-cmd="capture nameplate">capture nameplate</span>
+      <span class="hint-btn" data-cmd="capture damage kitchen north wall">capture damage kitchen north wall</span>
+      <span class="hint-btn" data-cmd="note: subfloor soft by the cabinet">note: subfloor soft</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     JOB RECORD SCREEN  (after session ends)
+══════════════════════════════════════════════════════════════════ -->
+<div id="screen-record" class="screen">
+
+  <div class="record-header">
+    <h2>Job Record</h2>
+    <button id="btn-new-session" class="btn-secondary">New Session</button>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="summary-cards" id="summary-cards"></div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" data-tab="captures">Captures</button>
+    <button class="tab" data-tab="notes">Notes</button>
+    <button class="tab" data-tab="lineitems">Line Items</button>
+    <button class="tab" data-tab="json">JSON</button>
+  </div>
+
+  <div id="tab-captures"  class="tab-content active"></div>
+  <div id="tab-notes"     class="tab-content"></div>
+  <div id="tab-lineitems" class="tab-content"></div>
+  <div id="tab-json"      class="tab-content">
+    <div class="json-actions">
+      <button id="btn-copy-json" class="btn-secondary">📋 Copy JSON</button>
+    </div>
+    <pre id="json-output" class="json-block"></pre>
+  </div>
+
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

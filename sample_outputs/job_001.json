@@ -1,0 +1,123 @@
+{
+  "job_id": "JOB-A3F2B901",
+  "session_id": "SES-7C4D1A2B",
+  "technician_id": null,
+  "started_at": "2026-11-23T09:14:03Z",
+  "completed_at": "2026-11-23T09:31:47Z",
+  "status": "pending_upload",
+  "captures": [
+    {
+      "id": "cap-001-np",
+      "capture_type": "nameplate",
+      "timestamp": "2026-11-23T09:14:55Z",
+      "image_local_path": "uploads/cap-001-np.jpg",
+      "image_remote_url": null,
+      "quality_check": {
+        "passed": true,
+        "blur_score": 182.4,
+        "brightness_score": 97.2,
+        "framing_score": 0.38,
+        "failure_reasons": [],
+        "thresholds_used": { "min_blur_score": 80.0, "min_brightness": 40.0, "min_framing": 0.15 }
+      },
+      "extraction": {
+        "type": "nameplate",
+        "payload": {
+          "make":             { "value": "A.O. Smith",      "confidence": 0.92, "source": "vision_api" },
+          "model":            { "value": "GPVH-50 100",     "confidence": 0.88, "source": "vision_api" },
+          "serial_number":    { "value": "202206143847",    "confidence": 0.84, "source": "vision_api" },
+          "manufacture_date": { "value": "06/2022",         "confidence": 0.79, "source": "vision_api" },
+          "raw_text": "A.O. Smith GPVH-50 100 / SER: 202206143847 / MFG: 06/2022 / 50 GAL / 240V / 4500W",
+          "overall_confidence": 0.86
+        }
+      },
+      "upload_status": "queued"
+    },
+    {
+      "id": "cap-002-dmg",
+      "capture_type": "damage",
+      "timestamp": "2026-11-23T09:19:22Z",
+      "image_local_path": "uploads/cap-002-dmg.jpg",
+      "image_remote_url": null,
+      "quality_check": {
+        "passed": true,
+        "blur_score": 141.7,
+        "brightness_score": 88.4,
+        "framing_score": 0.52,
+        "failure_reasons": [],
+        "thresholds_used": { "min_blur_score": 80.0, "min_brightness": 40.0, "min_framing": 0.15 }
+      },
+      "extraction": {
+        "type": "damage",
+        "payload": {
+          "room":          { "value": "kitchen",                        "confidence": 0.95, "source": "voice_command" },
+          "surface":       { "value": "north wall",                     "confidence": 0.90, "source": "voice_command" },
+          "damage_type":   { "value": "water stain with active moisture","confidence": 0.87, "source": "vision_api" },
+          "rough_size_m2": { "value": "0.6",                            "confidence": 0.44, "source": "vision_api" },
+          "severity_level":{ "value": "medium",                         "confidence": 0.82, "source": "vision_api" },
+          "overall_confidence": 0.80
+        }
+      },
+      "upload_status": "queued"
+    },
+    {
+      "id": "cap-003-dmg-retake",
+      "capture_type": "damage",
+      "timestamp": "2026-11-23T09:22:08Z",
+      "image_local_path": "uploads/cap-003-dmg-retake.jpg",
+      "image_remote_url": null,
+      "quality_check": {
+        "passed": false,
+        "blur_score": 24.1,
+        "brightness_score": 92.0,
+        "framing_score": 0.44,
+        "failure_reasons": [
+          "Image is blurry (score 24.1, need \u226580.0). Hold steady and retake."
+        ],
+        "thresholds_used": { "min_blur_score": 80.0, "min_brightness": 40.0, "min_framing": 0.15 }
+      },
+      "extraction": {
+        "type": "damage",
+        "payload": {
+          "room":           { "value": "kitchen",    "confidence": 0.95, "source": "voice_command" },
+          "surface":        { "value": "north wall", "confidence": 0.90, "source": "voice_command" },
+          "damage_type":    { "value": null,         "confidence": 0.0,  "source": "vision_api" },
+          "rough_size_m2":  { "value": null,         "confidence": 0.0,  "source": "vision_api" },
+          "severity_level": { "value": null,         "confidence": 0.0,  "source": "vision_api" },
+          "overall_confidence": 0.0
+        }
+      },
+      "upload_status": "queued"
+    }
+  ],
+  "notes": [
+    {
+      "id": "note-001",
+      "timestamp": "2026-11-23T09:27:14Z",
+      "raw_voice_text": "note: subfloor soft by the cabinet, possibly wet underneath",
+      "extraction": {
+        "raw_text": "note: subfloor soft by the cabinet, possibly wet underneath",
+        "location": { "value": "by the cabinet", "confidence": 0.75, "source": "keyword_match" },
+        "subject":  { "value": "subfloor soft by the cabinet, possibly wet underneath", "confidence": 0.9, "source": "voice_command" },
+        "urgency":  { "value": "normal", "confidence": 0.9, "source": "keyword_match" },
+        "overall_confidence": 0.85
+      }
+    }
+  ],
+  "line_items": [
+    { "id": "li-001", "code": "EQUIP-WH-EA",   "description": "Water heater replacement (40-gal electric)", "unit": "each",   "estimated_quantity": 1.0,  "confidence": 0.86, "source_captures": ["cap-001-np"] },
+    { "id": "li-002", "code": "DRY-RR-SF",     "description": "Remove and replace drywall",                 "unit": "sq_ft",  "estimated_quantity": 6.5,  "confidence": 0.80, "source_captures": ["cap-002-dmg"] },
+    { "id": "li-003", "code": "PAINT-WALL-SF",  "description": "Paint walls (2 coats)",                     "unit": "sq_ft",  "estimated_quantity": 6.5,  "confidence": 0.75, "source_captures": ["cap-002-dmg"] },
+    { "id": "li-004", "code": "FLR-SUB-SF",    "description": "Remove and replace subfloor (3/4\" OSB)",   "unit": "sq_ft",  "estimated_quantity": null, "confidence": 0.65, "source_captures": [] },
+    { "id": "li-005", "code": "EQUIP-DH-EA",   "description": "Dehumidifier placement (commercial)",        "unit": "each",   "estimated_quantity": 1.0,  "confidence": 0.80, "source_captures": ["cap-002-dmg"] }
+  ],
+  "metadata": {
+    "app_version": "1.0.0",
+    "sdk_version": "DAT-1.0-Web-Sim",
+    "device_mode": "android_browser",
+    "connectivity_events": [],
+    "total_captures": 3,
+    "failed_quality_checks": 1,
+    "retake_requests": 1
+  }
+}
