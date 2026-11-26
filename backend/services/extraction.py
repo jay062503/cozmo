@@ -1,17 +1,25 @@
 # services/extraction.py
-# Sends a pre-processed frame to GPT-4o and returns structured extraction.
+# Sends a pre-processed frame to Google Gemini 1.5 Flash and returns
+# structured extraction results.
 #
-# Vision model : GPT-4o (gpt-4o-2024-11-20)
-# Cost estimate: ~$0.007 per capture, ~$0.11 per job (15 captures avg)
+# Vision model : gemini-1.5-flash (free tier: 15 req/min, 1500 req/day)
+# Why Gemini Flash:
+#   - Free tier — no billing required
+#   - Native multimodal (image + text in one call)
+#   - JSON mode via responseMimeType = "application/json"
+#   - Fast (~1-2 s per call)
 #
-# Key design choices for low-quality image tolerance:
-#   - Image is pre-processed (auto-levels, sharpen, upscale) before the API call
-#   - Prompts explicitly instruct the model to infer from partial / degraded images
-#   - Model is told to never return null without a genuine attempt
-#   - detail="high" so GPT-4o uses full resolution tile processing
+# API key setup (run in the SAME terminal that starts the server):
+#   $env:GEMINI_API_KEY = "your-key-here"
+# Get a free key at: https://aistudio.google.com/app/apikey
+#
+# Image is pre-processed before the call (auto-levels, sharpen, upscale)
+# via quality_check.preprocess_for_extraction(). Prompts are written to
+# infer aggressively from low-quality / partial images.
 
 import os
 import json
+import base64
 import httpx
 from typing import Optional
 
@@ -21,16 +29,20 @@ from backend.models.job_record import (
 )
 from backend.services.quality_check import preprocess_for_extraction
 
-OPENAI_URL = "https://api.openai.com/v1/chat/completions"
-MODEL      = "gpt-4o-2024-11-20"
+GEMINI_URL = (
+    "https://generativelanguage.googleapis.com/v1beta/models/"
+    "gemini-1.5-flash:generateContent"
+)
 
 
 def get_api_key() -> str:
-    key = os.getenv("OPENAI_API_KEY", "")
+    key = os.getenv("GEMINI_API_KEY", "").strip()
     if not key:
         raise EnvironmentError(
-            "OPENAI_API_KEY environment variable is not set. "
-            "See README for setup instructions."
+            "GEMINI_API_KEY environment variable is not set. "
+            "Get a free key at https://aistudio.google.com/app/apikey "
+            "then run: $env:GEMINI_API_KEY = 'your-key-here' "
+            "in the same terminal that starts the server."
         )
     return key
 
@@ -49,7 +61,7 @@ async def extract(
             payload=_parse_note_locally(voice_hint or ""),
         )
 
-    # Enhance the image before sending — biggest single accuracy improvement.
+    # Pre-process before sending — biggest single accuracy improvement.
     enhanced = preprocess_for_extraction(image_b64)
 
     if capture_type == "nameplate":
@@ -60,21 +72,21 @@ async def extract(
     return ExtractionResult(type="damage", payload=payload)
 
 
-# ── Nameplate ─────────────────────────────────────────────────────────────────
+# ── Nameplate ─────────────────────────────────────���───────────────────────────
 
 async def _extract_nameplate(b64: str, hint: Optional[str]) -> NameplateExtraction:
-    system = """You are an expert OCR assistant for property insurance claims.
+    prompt = """You are an expert OCR assistant for property insurance claims.
 You are reading an appliance nameplate photo. The photo may be dark, blurry,
 taken at an angle, low resolution, or partially obscured — this is normal in field conditions.
 
 YOUR JOB: Extract every field. Never return null without a genuine attempt.
 
 Strategies for hard images:
-- Partial text: reconstruct from visible characters (e.g. "GE" + partial → "GEW_")
+- Partial text: reconstruct from visible characters (e.g. "GE" + partial -> "GEW_")
 - Faded/embossed text: mentally increase contrast and read the shape
 - Rotated or angled: mentally correct the perspective
 - Serial number cut off: return whatever is visible with low confidence
-- Manufacture date: often encoded in serial (first 4 digits = YYWW, or letter codes A=Jan)
+- Manufacture date: often encoded in serial (first 4 digits = YYWW, or letter A=Jan)
 
 Confidence scale:
   0.9+  clear and unambiguous
@@ -83,24 +95,22 @@ Confidence scale:
   0.3-0.5 best guess from context
   <0.3  barely readable but still include it
 
-Return ONLY valid JSON:
+Return ONLY valid JSON (no markdown, no code fences):
 {
-  "make":             {"value": string|null, "confidence": float, "source": "vision_api"},
-  "model":            {"value": string|null, "confidence": float, "source": "vision_api"},
-  "serial_number":    {"value": string|null, "confidence": float, "source": "vision_api"},
-  "manufacture_date": {"value": string|null, "confidence": float, "source": "vision_api"},
+  "make":             {"value": string_or_null, "confidence": float, "source": "vision_api"},
+  "model":            {"value": string_or_null, "confidence": float, "source": "vision_api"},
+  "serial_number":    {"value": string_or_null, "confidence": float, "source": "vision_api"},
+  "manufacture_date": {"value": string_or_null, "confidence": float, "source": "vision_api"},
   "raw_text": "everything readable from the label verbatim",
   "overall_confidence": float
 }"""
 
-    user_text = (
-        "Extract all nameplate fields. The image may be low quality — "
-        "do your best to infer every field rather than returning null."
-    )
     if hint:
-        user_text += f" Additional context: {hint}"
+        prompt += f"\n\nAdditional context from voice command: {hint}"
 
-    raw = await _call_api(system, user_text, b64)
+    prompt += "\n\nExtract all nameplate fields from this image."
+
+    raw = await _call_gemini(prompt, b64)
     j   = _safe_parse(raw)
 
     return NameplateExtraction(
@@ -116,7 +126,7 @@ Return ONLY valid JSON:
 # ── Damage ────────────────────────────────────────────────────────────────────
 
 async def _extract_damage(b64: str, hint: Optional[str]) -> DamageExtraction:
-    system = """You are an expert property damage assessor for insurance claims.
+    prompt = """You are an expert property damage assessor for insurance claims.
 You are looking at a photo of water or structural damage. The photo may be dark,
 blurry, low resolution, or taken at an angle — this is normal in field conditions.
 
@@ -129,32 +139,29 @@ Strategies for hard images:
 - Size estimation: use ANY visible reference — door frame ~2m tall, light switch ~1.1m
   from floor, outlet ~0.3m wide, baseboard ~0.1m tall, tile ~0.3m square.
   Always attempt a size estimate even if uncertain. Set confidence below 0.5.
-- Severity: even from a blurry image you can tell "small stain" vs "large buckle"
 - Never return null for damage_type or severity_level — always make a best guess.
 
 Voice command context (if provided) is ground truth for room and surface.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON (no markdown, no code fences):
 {
   "room":           {"value": string, "confidence": float, "source": string},
   "surface":        {"value": string, "confidence": float, "source": string},
   "damage_type":    {"value": string, "confidence": float, "source": string},
   "rough_size_m2":  {"value": string, "confidence": float, "source": string},
-  "severity_level": {"value": "low"|"medium"|"high", "confidence": float, "source": string},
+  "severity_level": {"value": "low or medium or high", "confidence": float, "source": string},
   "overall_confidence": float
 }"""
 
-    user_text = (
-        "Assess the damage in this image. "
-        "Even if quality is poor, provide your best estimate for every field."
-    )
     if hint:
-        user_text += (
-            f" Voice command context: {hint}. "
+        prompt += (
+            f"\n\nVoice command context: {hint}. "
             "Use this as ground truth for room and surface."
         )
 
-    raw = await _call_api(system, user_text, b64)
+    prompt += "\n\nAssess the damage in this image. Provide your best estimate for every field."
+
+    raw = await _call_gemini(prompt, b64)
     j   = _safe_parse(raw)
 
     return DamageExtraction(
@@ -195,48 +202,69 @@ def _parse_note_locally(text: str) -> NoteExtraction:
     )
 
 
-# ── OpenAI API call ───────────────────────────────────────────────────────────
+# ── Gemini API call ───────────────────────────────────────────────────────────
 
-async def _call_api(system: str, user_text: str, b64: str) -> str:
+async def _call_gemini(prompt: str, b64: str) -> str:
+    # Strip data-URI prefix if present
     if "," in b64:
         b64 = b64.split(",", 1)[1]
 
-    headers = {
-        "Authorization": f"Bearer {get_api_key()}",
-        "Content-Type":  "application/json",
-    }
+    # Gemini expects base64 inline as an inlineData part
     body = {
-        "model":           MODEL,
-        "max_tokens":      700,
-        "response_format": {"type": "json_object"},
-        "messages": [
-            {"role": "system", "content": system},
-            {"role": "user", "content": [
-                {"type": "text", "text": user_text},
-                {"type": "image_url", "image_url": {
-                    "url":    f"data:image/jpeg;base64,{b64}",
-                    "detail": "high",   # full tile processing — critical for OCR
-                }},
-            ]},
-        ],
+        "contents": [{
+            "parts": [
+                {
+                    "inlineData": {
+                        "mimeType": "image/jpeg",
+                        "data": b64,
+                    }
+                },
+                {
+                    "text": prompt
+                },
+            ]
+        }],
+        "generationConfig": {
+            "responseMimeType": "application/json",
+            "temperature": 0.1,       # low temperature for factual extraction
+            "maxOutputTokens": 700,
+        },
     }
 
+    url = f"{GEMINI_URL}?key={get_api_key()}"
+
     async with httpx.AsyncClient(timeout=45.0) as client:
-        resp = await client.post(OPENAI_URL, headers=headers, json=body)
+        resp = await client.post(
+            url,
+            headers={"Content-Type": "application/json"},
+            json=body,
+        )
 
     if resp.status_code != 200:
         try:
-            err_msg = resp.json().get("error", {}).get("message", resp.text)
+            err = resp.json()
+            err_msg = err.get("error", {}).get("message", resp.text)
         except Exception:
             err_msg = resp.text
-        raise RuntimeError(f"OpenAI API returned HTTP {resp.status_code}: {err_msg}")
+        raise RuntimeError(f"Gemini API returned HTTP {resp.status_code}: {err_msg}")
 
-    return resp.json()["choices"][0]["message"]["content"]
+    data = resp.json()
+    try:
+        return data["candidates"][0]["content"]["parts"][0]["text"]
+    except (KeyError, IndexError) as e:
+        raise RuntimeError(f"Unexpected Gemini response shape: {e} — {data}")
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def _safe_parse(text: str) -> dict:
+    # Gemini sometimes wraps JSON in markdown code fences even with
+    # responseMimeType set — strip them defensively.
+    text = text.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        # Drop first line (```json or ```) and last line (```)
+        text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:])
     try:
         return json.loads(text)
     except Exception:
